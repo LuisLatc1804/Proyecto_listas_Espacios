@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario de Espacios</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <div class="contenedor">
+        <h2>Planificador de Espacios</h2>
+
+        <!-- Controles de Mes y Año -->
+        <div class="controles-mes">
+            <button type="button" class="btn-mes" onclick="cambiarMes(-1)">◀ Anterior</button>
+            <div class="selectores">
+                <select id="selectMes" onchange="actualizarMes()"></select>
+                <select id="selectAnio" onchange="actualizarMes()"></select>
+            </div>
+            <button type="button" class="btn-mes" onclick="cambiarMes(1)">Siguiente ▶</button>
+        </div>
+
+        <!-- Vista de Calendario Principal -->
+        <div class="grid-calendario" id="calendario"></div>
+        <p class="nota">Selecciona cualquier día para gestionar o crear su lista de espacios.</p>
+    </div>
+
+    <!-- Modal / Ventana Emergente al hacer clic en un día -->
+    <div id="modalDia" class="modal oculto">
+        <div class="modal-contenido">
+            <div class="modal-header">
+                <h3 id="modalTitulo">Asignaciones para el día</h3>
+                <button type="button" class="btn-cerrar" onclick="cerrarModal()">&times;</button>
+            </div>
+
+            <!-- 1. SECCIÓN DE REGISTROS YA GUARDADOS EN ESTE DÍA -->
+            <h4 class="subtitulo-modal">Asignaciones existentes:</h4>
+            <div class="tabla-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Compañero</th>
+                            <th>Espacio</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoTablaExistentes"></tbody>
+                </table>
+            </div>
+
+            <!-- 2. FORMULARIO PARA AGREGAR NUEVAS ASIGNACIONES -->
+            <h4 class="subtitulo-modal">Agregar nueva asignación:</h4>
+            <div class="formulario-item">
+                <div class="campo">
+                    <label>Compañero:</label>
+                    <select id="modalCompanero"></select>
+                </div>
+                <div class="campo">
+                    <label>Espacio:</label>
+                    <select id="modalEspacio">
+                        <option value="Laboratorio 1">Laboratorio 1</option>
+                        <option value="Laboratorio 2">Laboratorio 2</option>
+                        <option value="Sala de Servidores">Sala de Servidores</option>
+                        <option value="Taller de Hardware">Taller de Hardware</option>
+                    </select>
+                </div>
+                <button type="button" class="btn-agregar" onclick="agregarItemALista()">+ Agregar</button>
+            </div>
+
+            <!-- 3. LISTA TEMPORAL PENDIENTE POR GUARDAR -->
+            <h4 class="subtitulo-modal">Nuevos por guardar en este lote:</h4>
+            <div class="tabla-scroll">
+                <table id="tablaItems">
+                    <thead>
+                        <tr>
+                            <th>Compañero</th>
+                            <th>Espacio</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoTabla"></tbody>
+                </table>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-secundario" onclick="cerrarModal()">Cerrar</button>
+                <button type="button" class="btn-primario" onclick="guardarListaDia()">Guardar Nuevos</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla temporal de items agregados para ese día -->
+    <h4>Lista preparada para guardar:</h4>
+    <div class="tabla-scroll">
+        <table id="tablaItems">
+            <thead>
+                <tr>
+                    <th>Compañero</th>
+                    <th>Espacio</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTabla"></tbody>
+        </table>
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn-secundario" onclick="cerrarModal()">Cancelar</button>
+        <button type="button" class="btn-primario" onclick="guardarListaDia()">Guardar Lista del Día</button>
+    </div>
+    </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
