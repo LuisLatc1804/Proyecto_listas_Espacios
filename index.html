@@ -13,7 +13,7 @@
     <div class="contenedor">
         <h2>Planificador de Espacios</h2>
 
-        <!-- Controles de Mes y Año -->
+        <!-- Controles de Mes, Año e Impresión -->
         <div class="controles-mes">
             <button type="button" class="btn-mes" onclick="cambiarMes(-1)">◀ Anterior</button>
             <div class="selectores">
@@ -21,6 +21,7 @@
                 <select id="selectAnio" onchange="actualizarMes()"></select>
             </div>
             <button type="button" class="btn-mes" onclick="cambiarMes(1)">Siguiente ▶</button>
+            <button type="button" class="btn-imprimir" onclick="abrirModalImpresion()">🖨 Imprimir Reporte</button>
         </div>
 
         <!-- Vista de Calendario Principal -->
@@ -36,7 +37,7 @@
                 <button type="button" class="btn-cerrar" onclick="cerrarModal()">&times;</button>
             </div>
 
-            <!-- 1. SECCIÓN DE REGISTROS YA GUARDADOS EN ESTE DÍA -->
+            <!-- 1. Sección de registros ya guardados -->
             <h4 class="subtitulo-modal">Asignaciones existentes:</h4>
             <div class="tabla-scroll">
                 <table>
@@ -51,26 +52,26 @@
                 </table>
             </div>
 
-            <!-- 2. FORMULARIO PARA AGREGAR NUEVAS ASIGNACIONES -->
+            <!-- 2. Formulario para agregar nuevas asignaciones -->
             <h4 class="subtitulo-modal">Agregar nueva asignación:</h4>
             <div class="formulario-item">
                 <div class="campo">
-                    <label>Compañero:</label>
+                    <label for="modalCompanero">Compañero:</label>
                     <select id="modalCompanero"></select>
                 </div>
                 <div class="campo">
-                    <label>Espacio:</label>
+                    <label for="modalEspacio">Espacio:</label>
                     <select id="modalEspacio">
-                        <option value="Laboratorio 1">Laboratorio 1</option>
-                        <option value="Laboratorio 2">Laboratorio 2</option>
-                        <option value="Sala de Servidores">Sala de Servidores</option>
-                        <option value="Taller de Hardware">Taller de Hardware</option>
+                        <option value="Pollo">Pollo</option>
+                        <option value="Limpieza">Limpieza</option>
+                        <option value="Fororo Y Chicha">Fororo Y Chicha</option>
+                        <option value="Recepcion de Verduras">Recepcion De Verduras</option>
                     </select>
                 </div>
                 <button type="button" class="btn-agregar" onclick="agregarItemALista()">+ Agregar</button>
             </div>
 
-            <!-- 3. LISTA TEMPORAL PENDIENTE POR GUARDAR -->
+            <!-- 3. Lista temporal pendiente por guardar -->
             <h4 class="subtitulo-modal">Nuevos por guardar en este lote:</h4>
             <div class="tabla-scroll">
                 <table id="tablaItems">
@@ -92,26 +93,35 @@
         </div>
     </div>
 
-    <!-- Tabla temporal de items agregados para ese día -->
-    <h4>Lista preparada para guardar:</h4>
-    <div class="tabla-scroll">
-        <table id="tablaItems">
-            <thead>
-                <tr>
-                    <th>Compañero</th>
-                    <th>Espacio</th>
-                    <th>Acción</th>
-                </tr>
-            </thead>
-            <tbody id="cuerpoTabla"></tbody>
-        </table>
-    </div>
+    <!-- Modal de Impresión -->
+    <div id="modalImprimir" class="modal oculto no-print">
+        <div class="modal-contenido modal-imprimir-box">
+            <div class="modal-header">
+                <h3>Imprimir Cronograma de Espacio</h3>
+                <button type="button" class="btn-cerrar" onclick="cerrarModalImpresion()">&times;</button>
+            </div>
 
-    <div class="modal-footer">
-        <button type="button" class="btn-secundario" onclick="cerrarModal()">Cancelar</button>
-        <button type="button" class="btn-primario" onclick="guardarListaDia()">Guardar Lista del Día</button>
-    </div>
-    </div>
+            <div class="form-group" style="margin-top: 1rem;">
+                <label for="selectEspacioImprimir">Selecciona el espacio a imprimir:</label>
+                <select id="selectEspacioImprimir" onchange="actualizarVistaPreviaImpresion()">
+                    <option value="Pollo">Pollo</option>
+                    <option value="Limpieza">Limpieza</option>
+                    <option value="Fororo y Chicha">Fororo y Chicha</option>
+                    <option value="Recepcion de Verduras">Recepcion de Verduras</option>
+                </select>
+            </div>
+
+            <!-- Contenedor del documento imprimible -->
+            <div id="hojaImpresion" class="hoja-impresion">
+                <!-- Se genera dinámicamente con JavaScript -->
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-secundario" onclick="cerrarModalImpresion()">Cerrar</button>
+                <button type="button" class="btn-primario" onclick="ejecutarImpresion()">Mandar a Imprimir /
+                    PDF</button>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>

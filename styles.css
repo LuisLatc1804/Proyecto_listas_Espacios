@@ -10,6 +10,7 @@ body {
   color: #2c3e50;
 }
 
+/* --- Contenedor Principal --- */
 .contenedor {
   max-width: 750px;
   margin: 0 auto;
@@ -24,11 +25,19 @@ h2 {
   text-align: center;
 }
 
+/* --- Barra de Controles de Mes / Impresión --- */
 .controles-mes {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
   margin: 1.5rem 0 1rem 0;
+  flex-wrap: wrap;
+}
+
+.selectores {
+  display: flex;
+  gap: 6px;
 }
 
 .selectores select {
@@ -37,6 +46,7 @@ h2 {
   border-radius: 6px;
   border: 1px solid #ccd0d5;
   font-weight: 600;
+  background-color: #ffffff;
 }
 
 .btn-mes {
@@ -46,12 +56,29 @@ h2 {
   border-radius: 6px;
   cursor: pointer;
   font-weight: 600;
+  transition: background-color 0.15s ease;
 }
 
 .btn-mes:hover {
   background-color: #e2e6ea;
 }
 
+.btn-imprimir {
+  background-color: #495057;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.15s ease;
+}
+
+.btn-imprimir:hover {
+  background-color: #343a40;
+}
+
+/* --- Cuadrícula del Calendario --- */
 .grid-calendario {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -77,6 +104,7 @@ h2 {
   flex-direction: column;
   justify-content: space-between;
   transition: all 0.15s ease;
+  user-select: none;
 }
 
 .dia:hover {
@@ -112,7 +140,7 @@ h2 {
   margin-top: 1.2rem;
 }
 
-/* Modal */
+/* --- Estructura de Modales --- */
 .modal {
   position: fixed;
   top: 0;
@@ -136,7 +164,13 @@ h2 {
   border-radius: 12px;
   width: 90%;
   max-width: 550px;
+  max-height: 90vh;
+  overflow-y: auto;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modal-imprimir-box {
+  max-width: 700px;
 }
 
 .modal-header {
@@ -147,6 +181,10 @@ h2 {
   padding-bottom: 0.5rem;
 }
 
+.modal-header h3 {
+  margin: 0;
+}
+
 .btn-cerrar {
   background: none;
   border: none;
@@ -155,11 +193,19 @@ h2 {
   color: #6c757d;
 }
 
+.subtitulo-modal {
+  margin: 1.2rem 0 0.5rem 0;
+  font-size: 0.95rem;
+  color: #495057;
+  font-weight: 700;
+}
+
+/* --- Formularios dentro del Modal --- */
 .formulario-item {
   display: flex;
   gap: 10px;
   align-items: flex-end;
-  margin-top: 1rem;
+  margin-top: 0.8rem;
   flex-wrap: wrap;
 }
 
@@ -180,22 +226,33 @@ select {
   padding: 8px;
   border: 1px solid #ced4da;
   border-radius: 6px;
+  outline: none;
+}
+
+select:focus {
+  border-color: #007bff;
 }
 
 .btn-agregar {
   background-color: #17a2b8;
-  color: white;
+  color: #ffffff;
   border: none;
-  padding: 9px 12px;
+  padding: 9px 14px;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 600;
+  transition: background-color 0.15s ease;
 }
 
+.btn-agregar:hover {
+  background-color: #138496;
+}
+
+/* --- Tablas en Modales --- */
 .tabla-scroll {
   max-height: 180px;
   overflow-y: auto;
-  margin: 1rem 0;
+  margin: 0.8rem 0;
   border: 1px solid #dee2e6;
   border-radius: 6px;
 }
@@ -215,54 +272,8 @@ td {
 
 th {
   background: #f8f9fa;
-}
-
-.btn-quitar {
-  background: #e63946;
-  color: white;
-  border: none;
-  padding: 3px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  border-top: 1px solid #dee2e6;
-  padding-top: 1rem;
-}
-
-.btn-primario {
-  background-color: #28a745;
-  color: white;
-  border: none;
-  padding: 9px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.btn-secundario {
-  background-color: #6c757d;
-  color: white;
-  border: none;
-  padding: 9px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.subtitulo-modal {
-  margin: 1.2rem 0 0.5rem 0;
-  font-size: 0.95rem;
-  color: #495057;
-  font-weight: 700;
-}
-
-.modal-contenido {
-  max-height: 90vh;
-  overflow-y: auto;
+  position: sticky;
+  top: 0;
 }
 
 .badge-guardado {
@@ -272,4 +283,234 @@ th {
   padding: 2px 6px;
   border-radius: 4px;
   font-weight: 600;
+}
+
+.btn-quitar {
+  background: #e63946;
+  color: #ffffff;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.btn-quitar:hover {
+  background: #d62828;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid #dee2e6;
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+
+.btn-primario {
+  background-color: #28a745;
+  color: #ffffff;
+  border: none;
+  padding: 9px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.15s ease;
+}
+
+.btn-primario:hover {
+  background-color: #218838;
+}
+
+.btn-secundario {
+  background-color: #6c757d;
+  color: #ffffff;
+  border: none;
+  padding: 9px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.btn-secundario:hover {
+  background-color: #5a6268;
+}
+
+/* --- Documento Imprimible / Reporte --- */
+.hoja-impresion {
+  background: #ffffff;
+  border: 1px solid #ddd;
+  padding: 2rem;
+  margin: 1rem 0;
+  border-radius: 4px;
+  color: #000000;
+  font-family: Arial, sans-serif;
+}
+
+.reporte-header {
+  text-align: center;
+  border-bottom: 2px solid #000000;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+.reporte-header h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  text-transform: uppercase;
+}
+
+.reporte-header p {
+  margin: 4px 0 0 0;
+  font-size: 0.95rem;
+}
+
+.reporte-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.tabla-reporte {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.tabla-reporte th,
+.tabla-reporte td {
+  border: 1px solid #000000;
+  padding: 8px;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.tabla-reporte th {
+  background-color: #f2f2f2;
+}
+
+.reporte-firmas {
+  margin-top: 50px;
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+}
+
+.linea-firma {
+  border-top: 1px solid #000000;
+  width: 200px;
+  padding-top: 5px;
+  font-size: 0.85rem;
+}
+
+/* --- Modal y Hoja de Impresión --- */
+.modal-imprimir-box {
+  max-width: 95vw;
+  /* Más ancho para previsualizar el modo horizontal */
+  width: 1000px;
+}
+
+.hoja-impresion {
+  background: #ffffff;
+  border: 1px solid #ddd;
+  padding: 1.5rem;
+  margin: 1rem 0;
+  border-radius: 4px;
+  color: #000000;
+  font-family: Arial, sans-serif;
+}
+
+.reporte-header {
+  text-align: center;
+  border-bottom: 2px solid #000000;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+.reporte-header h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  text-transform: uppercase;
+}
+
+/* Grilla imprimible en columnas (Lunes a Domingo o 7 días por fila) */
+/* Grilla adaptable que acomoda 3 o 4 días por fila según el ancho */
+.reporte-grid-dias {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  /* 4 tarjetas una al lado de otra */
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.tarjeta-dia-reporte {
+  border: 1.5px solid #000000;
+  border-radius: 4px;
+  padding: 10px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.tarjeta-dia-reporte .fecha-encabezado {
+  font-weight: bold;
+  font-size: 0.9rem;
+  border-bottom: 1.5px solid #000000;
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+  color: #000000;
+}
+
+.tarjeta-dia-reporte .lista-compas {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: #000000;
+}
+
+.tarjeta-dia-reporte .lista-compas li {
+  margin-bottom: 3px;
+  word-break: break-word;
+}
+
+/* ==============================================
+   REGLAS PARA IMPRESIÓN HORIZONTAL
+   ============================================== */
+@page {
+  size: landscape;
+  margin: 1cm;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #hojaImpresion,
+  #hojaImpresion * {
+    visibility: visible;
+  }
+
+  #hojaImpresion {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+  }
+
+  .reporte-grid-dias {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 10px !important;
+  }
 }

@@ -197,32 +197,27 @@ function agregarItemALista() {
         return;
     }
 
-    // 1. Obtener los espacios que el compañero ya tiene guardados en disco para este día
-    const espaciosGuardados = asignacionesExistentes
-        .filter(a => a.fecha === fechaSeleccionada && a.nombre.toLowerCase() === nombre.toLowerCase())
-        .map(a => a.espacio.toLowerCase());
+    // 1. Verificar si ya existe en las asignaciones guardadas en disco para este día
+    const yaRegistradoEnDisco = asignacionesExistentes.some(
+        a => a.fecha === fechaSeleccionada && a.nombre.trim().toLowerCase() === nombre.trim().toLowerCase()
+    );
 
-    // 2. Obtener los espacios que ya se agregaron en la tabla temporal actual
-    const espaciosEnTabla = itemsTemporales
-        .filter(it => it.nombre.toLowerCase() === nombre.toLowerCase())
-        .map(it => it.espacio.toLowerCase());
-
-    // Total de espacios acumulados para este compañero hoy
-    const todosLosEspacios = [...espaciosGuardados, ...espaciosEnTabla];
-
-    // Regla A: Evitar duplicar exactamente el mismo espacio para la misma persona hoy
-    if (todosLosEspacios.includes(espacio.toLowerCase())) {
-        alert(`${nombre} ya tiene asignado '${espacio}' en este día.`);
+    if (yaRegistradoEnDisco) {
+        alert(`[Error] ${nombre} ya tiene un espacio asignado en este día (${fechaSeleccionada}). No puede tener más de uno.`);
         return;
     }
 
-    // Regla B: Máximo 2 espacios distintos por día
-    if (todosLosEspacios.length >= 2) {
-        alert(`${nombre} ya tiene 2 espacios asignados para este día. No puede tener más.`);
+    // 2. Verificar si ya fue agregado en la lista temporal de este lote
+    const yaEnListaTemporal = itemsTemporales.some(
+        it => it.nombre.trim().toLowerCase() === nombre.trim().toLowerCase()
+    );
+
+    if (yaEnListaTemporal) {
+        alert(`[Error] Ya agregaste a ${nombre} a la lista para este día.`);
         return;
     }
 
-    // Se permite agregar (pueden coexistir varios compañeros en el mismo espacio)
+    // Se agrega correctamente (permitiendo que varios compañeros compartan el espacio)
     itemsTemporales.push({ nombre, espacio });
     renderTablaItems();
 }
@@ -290,3 +285,107 @@ async function guardarListaDia() {
 }
 
 document.addEventListener("DOMContentLoaded", inicializar);
+
+// Abrir y cerrar el modal de impresión
+async function abrirModalImpresion() {
+    await actualizarVistaPreviaImpresion();
+    document.getElementById("modalImprimir").classList.remove("oculto");
+}
+
+function cerrarModalImpresion() {
+    document.getElementById("modalImprimir").classList.add("oculto");
+}
+
+// Genera el documento formal del espacio y mes seleccionado
+// Asegúrate de que esta función sea async para traer los datos frescos del backend
+async function actualizarVistaPreviaImpresion() {
+    const mesIndex = parseInt(document.getElementById("selectMes").value, 10);
+    const anio = document.getElementById("selectAnio").value;
+    const mesNombre = MESES[mesIndex];
+    const selectEspacio = document.getElementById("selectEspacioImprimir");
+    const espacioSeleccionado = selectEspacio.value.trim().toLowerCase();
+    const nombreEspacioVisual = selectEspacio.options[selectEspacio.selectedIndex].text;
+    const contenedorHoja = document.getElementById("hojaImpresion");
+
+    // 1. Refrescar siempre desde la API para tener los últimos cambios guardados o borrados
+    try {
+        const res = await fetch(`${API_URL}/asignaciones`);
+        if (res.ok) {
+            asignacionesExistentes = await res.json();
+        }
+    } catch (e) {
+        console.warn("No se pudo refrescar desde la API, usando datos en memoria:", e);
+    }
+
+    const prefijoMes = `${anio}-${String(mesIndex + 1).padStart(2, "0")}`;
+
+    // 2. Filtrar con limpieza de espacios (trim) y minúsculas estrictas
+    const asignacionesValidas = asignacionesExistentes.filter(a => {
+        if (!a.fecha || !a.espacio || !a.nombre) return false;
+        const coincideMes = a.fecha.startsWith(prefijoMes);
+        const coincideEspacio = a.espacio.trim().toLowerCase() === espacioSeleccionado;
+        return coincideMes && coincideEspacio;
+    });
+
+    // 3. Agrupar compañeros por fecha: { "2026-09-11": ["Luis Toloza", ...] }
+    const mapaPorDia = {};
+    asignacionesValidas.forEach(a => {
+        const fecha = a.fecha.trim();
+        const nombre = a.nombre.trim();
+        if (!mapaPorDia[fecha]) {
+            mapaPorDia[fecha] = [];
+        }
+        if (!mapaPorDia[fecha].includes(nombre)) {
+            mapaPorDia[fecha].push(nombre);
+        }
+    });
+
+    // 4. Filtrar fechas que REALMENTE contengan compañeros (mayor a 0)
+    const fechasConRegistro = Object.keys(mapaPorDia)
+        .filter(fecha => mapaPorDia[fecha] && mapaPorDia[fecha].length > 0)
+        .sort();
+
+    // 5. Si NO hay registros para este espacio en este mes, mostrar solo aviso (cero cuadrículas)
+    if (fechasConRegistro.length === 0) {
+        contenedorHoja.innerHTML = `
+      <div class="reporte-header">
+        <h2>${nombreEspacioVisual} - Mes de ${mesNombre}</h2>
+      </div>
+      <div style="text-align: center; padding: 3rem 1rem; color: #555; font-size: 1rem;">
+        No hay compañeros asignados a <strong>${nombreEspacioVisual}</strong> en ${mesNombre} de ${anio}.
+      </div>
+    `;
+        return;
+    }
+
+    // 6. Generar ÚNICAMENTE las tarjetas de los días que tienen registros
+    const celdasHTML = fechasConRegistro.map(fechaStr => {
+        const diaNum = parseInt(fechaStr.split("-")[2], 10);
+        const companeros = mapaPorDia[fechaStr];
+
+        const itemsLista = companeros.map(nom => `<li>-${nom}</li>`).join("");
+
+        return `
+      <div class="tarjeta-dia-reporte">
+        <div class="fecha-encabezado">${diaNum} de ${mesNombre} ${anio}</div>
+        <ul class="lista-compas">
+          ${itemsLista}
+        </ul>
+      </div>
+    `;
+    }).join("");
+
+    // 7. Inyectar el reporte listo
+    contenedorHoja.innerHTML = `
+    <div class="reporte-header">
+      <h2>${nombreEspacioVisual} - Mes de ${mesNombre}</h2>
+    </div>
+    <div class="reporte-grid-dias">
+      ${celdasHTML}
+    </div>
+  `;
+}
+
+function ejecutarImpresion() {
+    window.print();
+}

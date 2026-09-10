@@ -54,27 +54,20 @@ def crear_asignaciones_dia(data: AsignacionDiaRequest):
     conflictos = []
 
     for item in data.items:
-        # Espacios que este compañero ya tiene asignados en esta fecha (en disco)
-        espacios_previos = [
-            a["espacio"].lower()
+        # Validar si el compañero YA tiene cualquier asignación en esta fecha
+        ya_asignado_hoy = any(
+            a["fecha"] == data.fecha and a["nombre"].strip().lower() == item.nombre.strip().lower()
             for a in asignaciones
-            if a["fecha"] == data.fecha and a["nombre"].lower() == item.nombre.lower()
-        ]
+        )
 
-        # Validación 1: No repetir exactamente el mismo espacio para el mismo compañero
-        if item.espacio.lower() in espacios_previos:
-            conflictos.append(f"{item.nombre} ya está registrado en '{item.espacio}' el {data.fecha}.")
-            continue
-
-        # Validación 2: Máximo 2 espacios distintos por día para el mismo compañero
-        if len(espacios_previos) >= 2:
-            conflictos.append(f"{item.nombre} ya alcanzó el límite de 2 espacios para el {data.fecha}.")
+        if ya_asignado_hoy:
+            conflictos.append(f"{item.nombre} ya tiene una asignación el día {data.fecha}.")
             continue
 
         nuevo_registro = {
             "id": len(asignaciones) + 1,
-            "nombre": item.nombre,
-            "espacio": item.espacio,
+            "nombre": item.nombre.strip(),
+            "espacio": item.espacio.strip(),
             "fecha": data.fecha
         }
         asignaciones.append(nuevo_registro)
