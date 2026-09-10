@@ -10,7 +10,9 @@ body {
   color: #2c3e50;
 }
 
-/* --- Contenedor Principal --- */
+/* ==============================================
+   1. CONTENEDOR PRINCIPAL Y CABECERA
+   ============================================== */
 .contenedor {
   max-width: 750px;
   margin: 0 auto;
@@ -25,7 +27,6 @@ h2 {
   text-align: center;
 }
 
-/* --- Barra de Controles de Mes / Impresión --- */
 .controles-mes {
   display: flex;
   justify-content: space-between;
@@ -78,7 +79,9 @@ h2 {
   background-color: #343a40;
 }
 
-/* --- Cuadrícula del Calendario --- */
+/* ==============================================
+   2. CUADRÍCULA DEL CALENDARIO PRINCIPAL
+   ============================================== */
 .grid-calendario {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -140,7 +143,9 @@ h2 {
   margin-top: 1.2rem;
 }
 
-/* --- Estructura de Modales --- */
+/* ==============================================
+   3. ESTRUCTURA DE MODALES
+   ============================================== */
 .modal {
   position: fixed;
   top: 0;
@@ -170,7 +175,8 @@ h2 {
 }
 
 .modal-imprimir-box {
-  max-width: 700px;
+  max-width: 95vw;
+  width: 1050px;
 }
 
 .modal-header {
@@ -200,7 +206,9 @@ h2 {
   font-weight: 700;
 }
 
-/* --- Formularios dentro del Modal --- */
+/* ==============================================
+   4. FORMULARIOS DENTRO DE MODALES
+   ============================================== */
 .formulario-item {
   display: flex;
   gap: 10px;
@@ -221,14 +229,18 @@ label {
   margin-bottom: 0.3rem;
 }
 
+input[type="text"],
 select {
   width: 100%;
-  padding: 8px;
+  padding: 8px 12px;
   border: 1px solid #ced4da;
   border-radius: 6px;
+  font-size: 0.95rem;
   outline: none;
+  background-color: #ffffff;
 }
 
+input[type="text"]:focus,
 select:focus {
   border-color: #007bff;
 }
@@ -248,7 +260,9 @@ select:focus {
   background-color: #138496;
 }
 
-/* --- Tablas en Modales --- */
+/* ==============================================
+   5. TABLAS DE GESTIÓN INTERNA
+   ============================================== */
 .tabla-scroll {
   max-height: 180px;
   overflow-y: auto;
@@ -337,180 +351,186 @@ th {
   background-color: #5a6268;
 }
 
-/* --- Documento Imprimible / Reporte --- */
-.hoja-impresion {
-  background: #ffffff;
-  border: 1px solid #ddd;
-  padding: 2rem;
-  margin: 1rem 0;
-  border-radius: 4px;
-  color: #000000;
-  font-family: Arial, sans-serif;
-}
-
-.reporte-header {
-  text-align: center;
-  border-bottom: 2px solid #000000;
-  padding-bottom: 10px;
-  margin-bottom: 15px;
-}
-
-.reporte-header h2 {
-  margin: 0;
-  font-size: 1.3rem;
-  text-transform: uppercase;
-}
-
-.reporte-header p {
-  margin: 4px 0 0 0;
-  font-size: 0.95rem;
-}
-
-.reporte-meta {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 15px;
-  font-size: 0.9rem;
-  font-weight: bold;
-}
-
-.tabla-reporte {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-}
-
-.tabla-reporte th,
-.tabla-reporte td {
-  border: 1px solid #000000;
-  padding: 8px;
-  text-align: left;
-  font-size: 0.9rem;
-}
-
-.tabla-reporte th {
-  background-color: #f2f2f2;
-}
-
-.reporte-firmas {
-  margin-top: 50px;
-  display: flex;
-  justify-content: space-around;
-  text-align: center;
-}
-
-.linea-firma {
-  border-top: 1px solid #000000;
-  width: 200px;
-  padding-top: 5px;
-  font-size: 0.85rem;
-}
-
-/* --- Modal y Hoja de Impresión --- */
-.modal-imprimir-box {
-  max-width: 95vw;
-  /* Más ancho para previsualizar el modo horizontal */
-  width: 1000px;
-}
-
+/* ==============================================
+   6. HOJA DEL REPORTE - CENTRADO TOTAL
+   ============================================== */
 .hoja-impresion {
   background: #ffffff;
   border: 1px solid #ddd;
   padding: 1.5rem;
-  margin: 1rem 0;
+  margin: 1rem auto;
+  /* Centra la hoja en la vista previa */
   border-radius: 4px;
   color: #000000;
   font-family: Arial, sans-serif;
+  max-width: 1000px;
+  box-sizing: border-box;
 }
 
 .reporte-header {
   text-align: center;
   border-bottom: 2px solid #000000;
   padding-bottom: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
 }
 
 .reporte-header h2 {
   margin: 0;
   font-size: 1.4rem;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
 }
 
-/* Grilla imprimible en columnas (Lunes a Domingo o 7 días por fila) */
-/* Grilla adaptable que acomoda 3 o 4 días por fila según el ancho */
-.reporte-grid-dias {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  /* 4 tarjetas una al lado de otra */
-  gap: 12px;
-  margin-top: 15px;
+/* Contenedor vertical de semanas centrado */
+.reporte-contenedor-semanas {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Centra cada fila semanal en el eje horizontal */
+  gap: 14px;
+  width: 100%;
 }
 
+/* Cada fila semanal centrada */
+.fila-semana-reporte {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  /* Centra las tarjetas de los días en la fila */
+  align-items: stretch;
+  gap: 14px;
+  width: 100%;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* Tarjetas de tamaño consistente y prolijo */
 .tarjeta-dia-reporte {
+  flex: 0 1 200px;
+  /* Ancho uniforme para que no se deformen al estar centradas */
+  width: 200px;
   border: 1.5px solid #000000;
   border-radius: 4px;
-  padding: 10px;
+  padding: 8px 10px;
   background: #ffffff;
+  min-height: 85px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  page-break-inside: avoid;
-  break-inside: avoid;
 }
 
 .tarjeta-dia-reporte .fecha-encabezado {
-  font-weight: bold;
-  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
   border-bottom: 1.5px solid #000000;
   padding-bottom: 4px;
   margin-bottom: 6px;
+  text-align: center;
+  /* Centra el día y la fecha dentro del encabezado de la tarjeta */
+}
+
+.dia-nombre-semana {
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
   color: #000000;
+  letter-spacing: 0.5px;
+}
+
+.dia-fecha-texto {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #222222;
 }
 
 .tarjeta-dia-reporte .lista-compas {
   list-style: none;
   padding: 0;
   margin: 0;
-  font-size: 0.85rem;
-  line-height: 1.4;
-  color: #000000;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  text-align: left;
+  /* Mantiene los nombres alineados con su guion de lista */
 }
 
 .tarjeta-dia-reporte .lista-compas li {
-  margin-bottom: 3px;
+  margin-bottom: 2px;
   word-break: break-word;
 }
 
 /* ==============================================
-   REGLAS PARA IMPRESIÓN HORIZONTAL
+   7. REGLAS PARA IMPRESIÓN CENTRADA (HORIZONTAL)
    ============================================== */
 @page {
   size: landscape;
-  margin: 1cm;
+  margin: 0.8cm;
 }
 
 @media print {
   body * {
-    visibility: hidden;
+    visibility: hidden !important;
+  }
+
+  #modalDia,
+  .contenedor {
+    display: none !important;
+  }
+
+  #modalImprimir {
+    position: static !important;
+    background: transparent !important;
+    width: 100% !important;
+    height: auto !important;
+    display: flex !important;
+    justify-content: center !important;
+    /* Centrado en el contenedor de impresión */
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .modal-contenido {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  #modalImprimir .modal-header,
+  #modalImprimir .form-group,
+  #modalImprimir .modal-footer {
+    display: none !important;
   }
 
   #hojaImpresion,
   #hojaImpresion * {
-    visibility: visible;
+    visibility: visible !important;
   }
 
   #hojaImpresion {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    border: none;
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    /* Centrado horizontal automático en la hoja */
+    padding: 0 !important;
+    border: none !important;
+    box-sizing: border-box !important;
   }
 
-  .reporte-grid-dias {
-    grid-template-columns: repeat(4, 1fr) !important;
-    gap: 10px !important;
+  .reporte-contenedor-semanas {
+    align-items: center !important;
+    width: 100% !important;
+  }
+
+  .fila-semana-reporte {
+    justify-content: center !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 12px;
+    width: 100% !important;
   }
 }

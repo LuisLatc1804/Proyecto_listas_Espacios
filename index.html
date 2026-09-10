@@ -55,19 +55,26 @@
             <!-- 2. Formulario para agregar nuevas asignaciones -->
             <h4 class="subtitulo-modal">Agregar nueva asignación:</h4>
             <div class="formulario-item">
+                <!-- Buscador con filtro dinámico -->
                 <div class="campo">
-                    <label for="modalCompanero">Compañero:</label>
-                    <select id="modalCompanero"></select>
+                    <label for="inputBuscarCompanero">Compañero:</label>
+                    <input type="text" id="inputBuscarCompanero" list="listaCompaneroDatalist"
+                        placeholder="Escribe para buscar..." autocomplete="off">
+                    <datalist id="listaCompaneroDatalist"></datalist>
                 </div>
+
+                <!-- Selector de Espacio -->
                 <div class="campo">
                     <label for="modalEspacio">Espacio:</label>
                     <select id="modalEspacio">
                         <option value="Pollo">Pollo</option>
+                        <option value="Desperdicio">Desperdicio</option>
                         <option value="Limpieza">Limpieza</option>
                         <option value="Fororo Y Chicha">Fororo Y Chicha</option>
-                        <option value="Recepcion de Verduras">Recepcion De Verduras</option>
+                        <option value="Recepcion de Verduras">Recepcion de Verduras</option>
                     </select>
                 </div>
+
                 <button type="button" class="btn-agregar" onclick="agregarItemALista()">+ Agregar</button>
             </div>
 
@@ -93,8 +100,8 @@
         </div>
     </div>
 
-    <!-- Modal de Impresión -->
-    <div id="modalImprimir" class="modal oculto no-print">
+    <!-- Modal de Impresión (sin la clase no-print que bloqueaba el diálogo) -->
+    <div id="modalImprimir" class="modal oculto">
         <div class="modal-contenido modal-imprimir-box">
             <div class="modal-header">
                 <h3>Imprimir Cronograma de Espacio</h3>
@@ -106,7 +113,7 @@
                 <select id="selectEspacioImprimir" onchange="actualizarVistaPreviaImpresion()">
                     <option value="Pollo">Pollo</option>
                     <option value="Limpieza">Limpieza</option>
-                    <option value="Fororo y Chicha">Fororo y Chicha</option>
+                    <option value="Fororo Y Chicha">Fororo Y Chicha</option>
                     <option value="Recepcion de Verduras">Recepcion de Verduras</option>
                 </select>
             </div>

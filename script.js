@@ -1,7 +1,7 @@
 const API_URL = "http://127.0.0.1:8080/api";
 
 let fechaSeleccionada = null;
-let itemsTemporales = []; // Lista temporal acumulada para el día abierto
+let itemsTemporales = []; // Lista temporal acumulada para el día abierto en el modal
 let fechaActual = new Date();
 let asignacionesExistentes = [];
 
@@ -10,7 +10,9 @@ const MESES = [
     "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
 ];
 
-// 1. Inicialización
+// ==========================================
+// 1. INICIALIZACIÓN DE LA APLICACIÓN
+// ==========================================
 async function inicializar() {
     poblarSelectoresFecha();
     await Promise.all([cargarCompaneros(), cargarAsignaciones()]);
@@ -33,15 +35,22 @@ function poblarSelectoresFecha() {
     selAnio.value = anioActual;
 }
 
-// 2. Cargar datos del Backend
+// ==========================================
+// 2. COMUNICACIÓN CON LA API
+// ==========================================
 async function cargarCompaneros() {
     try {
         const res = await fetch(`${API_URL}/companeros`);
+        if (!res.ok) throw new Error("Error en la respuesta del servidor");
         const data = await res.json();
-        const sel = document.getElementById("modalCompanero");
-        sel.innerHTML = data.map(c => {
-            const nombre = c.nombre || c.Nombre || "";
-            return `<option value="${nombre}">${nombre}</option>`;
+
+        // Sincronizado con id="listaCompaneroDatalist" de tu HTML
+        const datalist = document.getElementById("listaCompaneroDatalist");
+        if (!datalist) return;
+
+        datalist.innerHTML = data.map(c => {
+            const nombre = (c.nombre || c.Nombre || "").trim();
+            return `<option value="${nombre}">`;
         }).join("");
     } catch (err) {
         console.error("Error al cargar compañeros:", err);
@@ -51,16 +60,20 @@ async function cargarCompaneros() {
 async function cargarAsignaciones() {
     try {
         const res = await fetch(`${API_URL}/asignaciones`);
+        if (!res.ok) throw new Error("Error al obtener asignaciones");
         asignacionesExistentes = await res.json();
     } catch (err) {
+        console.error("Error al cargar asignaciones:", err);
         asignacionesExistentes = [];
     }
 }
 
-// 3. Renderizar el mes dinámico
+// ==========================================
+// 3. RENDERIZADO DEL CALENDARIO PRINCIPAL
+// ==========================================
 function renderCalendario() {
-    const mes = parseInt(document.getElementById("selectMes").value);
-    const anio = parseInt(document.getElementById("selectAnio").value);
+    const mes = parseInt(document.getElementById("selectMes").value, 10);
+    const anio = parseInt(document.getElementById("selectAnio").value, 10);
     const contenedor = document.getElementById("calendario");
     contenedor.innerHTML = "";
 
@@ -72,8 +85,7 @@ function renderCalendario() {
         contenedor.appendChild(h);
     });
 
-    // Determinar primer día y total de días del mes
-    const primerDiaSemana = (new Date(anio, mes, 1).getDay() + 6) % 7; // Lunes = 0
+    const primerDiaSemana = (new Date(anio, mes, 1).getDay() + 6) % 7;
     const totalDias = new Date(anio, mes + 1, 0).getDate();
 
     for (let i = 0; i < primerDiaSemana; i++) {
@@ -87,13 +99,12 @@ function renderCalendario() {
         const celda = document.createElement("div");
         celda.className = "dia";
 
-        // Contar asignaciones registradas en este día
         const cantidad = asignacionesExistentes.filter(a => a.fecha === diaStr).length;
 
         celda.innerHTML = `
-      <span class="dia-numero">${d}</span>
-      ${cantidad > 0 ? `<span class="dia-badge">${cantidad} reg.</span>` : ""}
-    `;
+          <span class="dia-numero">${d}</span>
+          ${cantidad > 0 ? `<span class="dia-badge">${cantidad} reg.</span>` : ""}
+        `;
 
         celda.onclick = () => abrirModalDia(diaStr);
         contenedor.appendChild(celda);
@@ -104,8 +115,8 @@ function cambiarMes(delta) {
     const selMes = document.getElementById("selectMes");
     const selAnio = document.getElementById("selectAnio");
 
-    let nuevoMes = parseInt(selMes.value) + delta;
-    let nuevoAnio = parseInt(selAnio.value);
+    let nuevoMes = parseInt(selMes.value, 10) + delta;
+    let nuevoAnio = parseInt(selAnio.value, 10);
 
     if (nuevoMes < 0) {
         nuevoMes = 11;
@@ -124,12 +135,16 @@ function actualizarMes() {
     renderCalendario();
 }
 
-// 4. Lógica de la Modal para el día seleccionado
-// Actualizar la apertura del modal para cargar lo existente
+// ==========================================
+// 4. GESTIÓN DEL MODAL DE ASIGNACIONES (DÍA)
+// ==========================================
 function abrirModalDia(fechaStr) {
     fechaSeleccionada = fechaStr;
     itemsTemporales = [];
     document.getElementById("modalTitulo").innerText = `Asignaciones: ${fechaStr}`;
+
+    const inputComp = document.getElementById("inputBuscarCompanero");
+    if (inputComp) inputComp.value = "";
 
     renderTablaExistentes();
     renderTablaItems();
@@ -137,7 +152,11 @@ function abrirModalDia(fechaStr) {
     document.getElementById("modalDia").classList.remove("oculto");
 }
 
-// Renderiza las asignaciones que ya están en asignaciones.json para esa fecha
+function cerrarModal() {
+    document.getElementById("modalDia").classList.add("oculto");
+    itemsTemporales = [];
+}
+
 function renderTablaExistentes() {
     const tbody = document.getElementById("cuerpoTablaExistentes");
     const existentes = asignacionesExistentes.filter(a => a.fecha === fechaSeleccionada);
@@ -148,19 +167,18 @@ function renderTablaExistentes() {
     }
 
     tbody.innerHTML = existentes.map(a => `
-    <tr>
-      <td>${a.nombre}</td>
-      <td><span class="badge-guardado">${a.espacio}</span></td>
-      <td>
-        <button type="button" class="btn-quitar" onclick="eliminarAsignacionExistente(${a.id})">Eliminar</button>
-      </td>
-    </tr>
-  `).join("");
+        <tr>
+            <td>${a.nombre}</td>
+            <td><span class="badge-guardado">${a.espacio}</span></td>
+            <td>
+                <button type="button" class="btn-quitar" onclick="eliminarAsignacionExistente(${a.id})">Eliminar</button>
+            </td>
+        </tr>
+    `).join("");
 }
 
-// Petición DELETE para quitar un registro ya guardado
 async function eliminarAsignacionExistente(id) {
-    if (!confirm("¿Seguro que deseas eliminar esta asignación registrada?")) {
+    if (!confirm("¿Deseas eliminar esta asignación registrada?")) {
         return;
     }
 
@@ -170,7 +188,7 @@ async function eliminarAsignacionExistente(id) {
         });
 
         if (!res.ok) {
-            alert("Error al eliminar la asignación");
+            alert("Error al eliminar la asignación en el servidor.");
             return;
         }
 
@@ -179,27 +197,30 @@ async function eliminarAsignacionExistente(id) {
         renderCalendario();
     } catch (err) {
         console.error("Error al eliminar:", err);
-        alert("Error de conexión.");
+        alert("Error de conexión al eliminar.");
     }
-}
-
-function cerrarModal() {
-    document.getElementById("modalDia").classList.add("oculto");
-    itemsTemporales = [];
 }
 
 function agregarItemALista() {
-    const nombre = document.getElementById("modalCompanero").value;
+    const inputCompanero = document.getElementById("inputBuscarCompanero");
+    const nombre = inputCompanero.value.trim();
     const espacio = document.getElementById("modalEspacio").value;
 
     if (!nombre) {
-        alert("Selecciona un compañero.");
+        alert("Ingresa o selecciona un compañero.");
         return;
     }
 
-    // 1. Verificar si ya existe en las asignaciones guardadas en disco para este día
+    // Validar que el nombre exista en el datalist
+    const opciones = Array.from(document.querySelectorAll("#listaCompaneroDatalist option")).map(o => o.value.toLowerCase());
+    if (!opciones.includes(nombre.toLowerCase())) {
+        alert(`"${nombre}" no coincide con ningún compañero registrado en el sistema.`);
+        return;
+    }
+
+    // 1. Validar que no tenga ya un espacio asignado en el JSON para este día
     const yaRegistradoEnDisco = asignacionesExistentes.some(
-        a => a.fecha === fechaSeleccionada && a.nombre.trim().toLowerCase() === nombre.trim().toLowerCase()
+        a => a.fecha === fechaSeleccionada && a.nombre.trim().toLowerCase() === nombre.toLowerCase()
     );
 
     if (yaRegistradoEnDisco) {
@@ -207,9 +228,9 @@ function agregarItemALista() {
         return;
     }
 
-    // 2. Verificar si ya fue agregado en la lista temporal de este lote
+    // 2. Validar que no esté agregado ya en la tabla temporal
     const yaEnListaTemporal = itemsTemporales.some(
-        it => it.nombre.trim().toLowerCase() === nombre.trim().toLowerCase()
+        it => it.nombre.trim().toLowerCase() === nombre.toLowerCase()
     );
 
     if (yaEnListaTemporal) {
@@ -217,9 +238,10 @@ function agregarItemALista() {
         return;
     }
 
-    // Se agrega correctamente (permitiendo que varios compañeros compartan el espacio)
     itemsTemporales.push({ nombre, espacio });
     renderTablaItems();
+    inputCompanero.value = "";
+    inputCompanero.focus();
 }
 
 function quitarItem(indice) {
@@ -235,15 +257,14 @@ function renderTablaItems() {
     }
 
     tbody.innerHTML = itemsTemporales.map((it, idx) => `
-    <tr>
-      <td>${it.nombre}</td>
-      <td>${it.espacio}</td>
-      <td><button type="button" class="btn-quitar" onclick="quitarItem(${idx})">Eliminar</button></td>
-    </tr>
-  `).join("");
+        <tr>
+            <td>${it.nombre}</td>
+            <td>${it.espacio}</td>
+            <td><button type="button" class="btn-quitar" onclick="quitarItem(${idx})">Eliminar</button></td>
+        </tr>
+    `).join("");
 }
 
-// 5. Envío en bloque al backend
 async function guardarListaDia() {
     if (itemsTemporales.length === 0) {
         alert("Agrega al menos un compañero y espacio a la lista.");
@@ -284,9 +305,9 @@ async function guardarListaDia() {
     }
 }
 
-document.addEventListener("DOMContentLoaded", inicializar);
-
-// Abrir y cerrar el modal de impresión
+// ==========================================
+// 5. REPORTE E IMPRESIÓN POR ESPACIO
+// ==========================================
 async function abrirModalImpresion() {
     await actualizarVistaPreviaImpresion();
     document.getElementById("modalImprimir").classList.remove("oculto");
@@ -296,38 +317,38 @@ function cerrarModalImpresion() {
     document.getElementById("modalImprimir").classList.add("oculto");
 }
 
-// Genera el documento formal del espacio y mes seleccionado
-// Asegúrate de que esta función sea async para traer los datos frescos del backend
 async function actualizarVistaPreviaImpresion() {
     const mesIndex = parseInt(document.getElementById("selectMes").value, 10);
-    const anio = document.getElementById("selectAnio").value;
+    const anio = parseInt(document.getElementById("selectAnio").value, 10);
     const mesNombre = MESES[mesIndex];
     const selectEspacio = document.getElementById("selectEspacioImprimir");
     const espacioSeleccionado = selectEspacio.value.trim().toLowerCase();
     const nombreEspacioVisual = selectEspacio.options[selectEspacio.selectedIndex].text;
     const contenedorHoja = document.getElementById("hojaImpresion");
 
-    // 1. Refrescar siempre desde la API para tener los últimos cambios guardados o borrados
+    const NOMBRES_DIAS = [
+        "Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"
+    ];
+
+    // Refrescar datos desde la API
     try {
         const res = await fetch(`${API_URL}/asignaciones`);
         if (res.ok) {
             asignacionesExistentes = await res.json();
         }
     } catch (e) {
-        console.warn("No se pudo refrescar desde la API, usando datos en memoria:", e);
+        console.warn("Usando datos locales en memoria:", e);
     }
 
     const prefijoMes = `${anio}-${String(mesIndex + 1).padStart(2, "0")}`;
 
-    // 2. Filtrar con limpieza de espacios (trim) y minúsculas estrictas
+    // 1. Filtrar únicamente las asignaciones válidas para este espacio y mes
     const asignacionesValidas = asignacionesExistentes.filter(a => {
         if (!a.fecha || !a.espacio || !a.nombre) return false;
-        const coincideMes = a.fecha.startsWith(prefijoMes);
-        const coincideEspacio = a.espacio.trim().toLowerCase() === espacioSeleccionado;
-        return coincideMes && coincideEspacio;
+        return a.fecha.startsWith(prefijoMes) && a.espacio.trim().toLowerCase() === espacioSeleccionado;
     });
 
-    // 3. Agrupar compañeros por fecha: { "2026-09-11": ["Luis Toloza", ...] }
+    // 2. Mapear compañeros por fecha
     const mapaPorDia = {};
     asignacionesValidas.forEach(a => {
         const fecha = a.fecha.trim();
@@ -340,12 +361,8 @@ async function actualizarVistaPreviaImpresion() {
         }
     });
 
-    // 4. Filtrar fechas que REALMENTE contengan compañeros (mayor a 0)
-    const fechasConRegistro = Object.keys(mapaPorDia)
-        .filter(fecha => mapaPorDia[fecha] && mapaPorDia[fecha].length > 0)
-        .sort();
-
-    // 5. Si NO hay registros para este espacio en este mes, mostrar solo aviso (cero cuadrículas)
+    // Si no hay asignaciones en todo el mes
+    const fechasConRegistro = Object.keys(mapaPorDia).filter(f => mapaPorDia[f].length > 0);
     if (fechasConRegistro.length === 0) {
         contenedorHoja.innerHTML = `
       <div class="reporte-header">
@@ -358,34 +375,80 @@ async function actualizarVistaPreviaImpresion() {
         return;
     }
 
-    // 6. Generar ÚNICAMENTE las tarjetas de los días que tienen registros
-    const celdasHTML = fechasConRegistro.map(fechaStr => {
-        const diaNum = parseInt(fechaStr.split("-")[2], 10);
-        const companeros = mapaPorDia[fechaStr];
+    // 3. Separar todos los días del mes en bloques de semanas naturales (Lunes a Domingo)
+    const totalDiasMes = new Date(anio, mesIndex + 1, 0).getDate();
+    const semanasDelMes = [];
+    let semanaActual = [];
 
-        const itemsLista = companeros.map(nom => `<li>-${nom}</li>`).join("");
+    for (let d = 1; d <= totalDiasMes; d++) {
+        const fechaObj = new Date(anio, mesIndex, d);
+        const diaStr = `${anio}-${String(mesIndex + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+        const diaSemanaIndex = fechaObj.getDay(); // 0 = Domingo, 1 = Lunes...
 
-        return `
-      <div class="tarjeta-dia-reporte">
-        <div class="fecha-encabezado">${diaNum} de ${mesNombre} ${anio}</div>
-        <ul class="lista-compas">
-          ${itemsLista}
-        </ul>
+        semanaActual.push({
+            diaNum: d,
+            fechaStr: diaStr,
+            nombreDia: NOMBRES_DIAS[diaSemanaIndex],
+            companeros: mapaPorDia[diaStr] || []
+        });
+
+        // Si es Domingo (fin de semana natural) o es el último día del mes, cerramos la semana
+        if (diaSemanaIndex === 0 || d === totalDiasMes) {
+            semanasDelMes.push(semanaActual);
+            semanaActual = [];
+        }
+    }
+
+    // 4. Generar el HTML: una fila por semana que tenga al menos un registro
+    let filasSemanalesHTML = "";
+
+    semanasDelMes.forEach(semana => {
+        // Filtrar estrictamente los días de esa semana QUE TENGAN asignaciones
+        const diasConAsignacion = semana.filter(item => item.companeros.length > 0);
+
+        // Si la semana no tuvo nada asignado, no dibujamos la línea
+        if (diasConAsignacion.length === 0) return;
+
+        // Generamos únicamente las tarjetas de los días ocupados
+        const tarjetasHTML = diasConAsignacion.map(item => {
+            const itemsLista = item.companeros.map(nom => `<li>-${nom}</li>`).join("");
+
+            return `
+        <div class="tarjeta-dia-reporte">
+          <div class="fecha-encabezado">
+            <span class="dia-nombre-semana">${item.nombreDia}</span>
+            <span class="dia-fecha-texto">${item.diaNum} de ${mesNombre} ${anio}</span>
+          </div>
+          <ul class="lista-compas">
+            ${itemsLista}
+          </ul>
+        </div>
+      `;
+        }).join("");
+
+        // Envolvemos los días en una fila horizontal exclusiva para esa semana
+        filasSemanalesHTML += `
+      <div class="fila-semana-reporte">
+        ${tarjetasHTML}
       </div>
     `;
-    }).join("");
+    });
 
-    // 7. Inyectar el reporte listo
+    // 5. Inyectar título y las filas semanales
     contenedorHoja.innerHTML = `
     <div class="reporte-header">
       <h2>${nombreEspacioVisual} - Mes de ${mesNombre}</h2>
     </div>
-    <div class="reporte-grid-dias">
-      ${celdasHTML}
+    <div class="reporte-contenedor-semanas">
+      ${filasSemanalesHTML}
     </div>
   `;
 }
 
 function ejecutarImpresion() {
-    window.print();
+    setTimeout(() => {
+        window.print();
+    }, 60);
 }
+
+document.addEventListener("DOMContentLoaded", inicializar);
