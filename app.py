@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from typing import List
 import json
 from pathlib import Path
+from typing import Optional
 
 app = FastAPI()
 
@@ -34,6 +35,7 @@ def guardar_json(ruta: Path, datos: list):
 class AsignacionItem(BaseModel):
     nombre: str
     espacio: str
+    fecha: Optional[str] = None  # Permite que ítems como Desperdicio traigan su propia fecha
 
 class AsignacionDiaRequest(BaseModel):
     fecha: str  # YYYY-MM-DD
@@ -54,37 +56,31 @@ def crear_asignaciones_dia(data: AsignacionDiaRequest):
     conflictos = []
 
     for item in data.items:
-        # Validar si el compañero YA tiene cualquier asignación en esta fecha
+        # Usa la fecha propia del ítem o la fecha general del lote
+        fecha_registro = item.fecha if item.fecha else data.fecha
+        nombre_limpio = item.nombre.strip()
+        espacio_limpio = item.espacio.strip()
+
+        # Validar si el compañero ya tiene asignación en esa fecha específica
         ya_asignado_hoy = any(
-            a["fecha"] == data.fecha and a["nombre"].strip().lower() == item.nombre.strip().lower()
+            a["fecha"] == fecha_registro and a["nombre"].strip().lower() == nombre_limpio.lower()
             for a in asignaciones
         )
 
         if ya_asignado_hoy:
-            conflictos.append(f"{item.nombre} ya tiene una asignación el día {data.fecha}.")
+            conflictos.append(f"{nombre_limpio} ya tiene una asignación el día {fecha_registro}.")
             continue
 
         nuevo_registro = {
             "id": len(asignaciones) + 1,
-            "nombre": item.nombre.strip(),
-            "espacio": item.espacio.strip(),
-            "fecha": data.fecha
+            "nombre": nombre_limpio,
+            "espacio": espacio_limpio,
+            "fecha": fecha_registro
         }
         asignaciones.append(nuevo_registro)
-        guardados.append(f"{item.nombre} -> {item.espacio}")
+        guardados.append(f"{nombre_limpio} -> {espacio_limpio} ({fecha_registro})")
 
     if guardados:
         guardar_json(RUTA_ASIGNACIONES, asignaciones)
 
     return {"guardados": guardados, "conflictos": conflictos}
-
-@app.delete("/api/asignaciones/{asignacion_id}")
-def eliminar_asignacion(asignacion_id: int):
-    asignaciones = leer_json(RUTA_ASIGNACIONES)
-    nuevas_asignaciones = [a for a in asignaciones if a.get("id") != asignacion_id]
-
-    if len(nuevas_asignaciones) == len(asignaciones):
-        raise HTTPException(status_code=404, detail="Asignación no encontrada")
-
-    guardar_json(RUTA_ASIGNACIONES, nuevas_asignaciones)
-    return {"mensaje": f"Asignación {asignacion_id} eliminada correctamente"}

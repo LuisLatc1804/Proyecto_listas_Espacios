@@ -201,6 +201,37 @@ async function eliminarAsignacionExistente(id) {
     }
 }
 
+// Función auxiliar para obtener las fechas YYYY-MM-DD del Jueves, Viernes y Sábado de la semana dada
+function obtenerCicloJuevesViernesSabado(fechaStr) {
+    const [y, m, d] = fechaStr.split("-").map(Number);
+    const fechaObj = new Date(y, m - 1, d);
+
+    // getDay(): Domingo = 0, Lunes = 1, Martes = 2, Miercoles = 3, Jueves = 4, Viernes = 5, Sabado = 6
+    // Calculamos la distancia respecto al Jueves (4)
+    const diaSemana = fechaObj.getDay();
+    // Convertir a base Lunes=0 ... Domingo=6
+    const diaSemanaAjustado = (diaSemana + 6) % 7; // Lunes=0, Jueves=3
+    const distanciaAJueves = 3 - diaSemanaAjustado;
+
+    const jueves = new Date(fechaObj);
+    jueves.setDate(fechaObj.getDate() + distanciaAJueves);
+
+    const viernes = new Date(jueves);
+    viernes.setDate(jueves.getDate() + 1);
+
+    const sabado = new Date(jueves);
+    sabado.setDate(jueves.getDate() + 2);
+
+    const formatear = (dt) => {
+        const anio = dt.getFullYear();
+        const mes = String(dt.getMonth() + 1).padStart(2, "0");
+        const dia = String(dt.getDate()).padStart(2, "0");
+        return `${anio}-${mes}-${dia}`;
+    };
+
+    return [formatear(jueves), formatear(viernes), formatear(sabado)];
+}
+
 function agregarItemALista() {
     const inputCompanero = document.getElementById("inputBuscarCompanero");
     const nombre = inputCompanero.value.trim();
@@ -211,14 +242,58 @@ function agregarItemALista() {
         return;
     }
 
-    // Validar que el nombre exista en el datalist
+    // Validar existencia en el datalist
     const opciones = Array.from(document.querySelectorAll("#listaCompaneroDatalist option")).map(o => o.value.toLowerCase());
     if (!opciones.includes(nombre.toLowerCase())) {
         alert(`"${nombre}" no coincide con ningún compañero registrado en el sistema.`);
         return;
     }
 
-    // 1. Validar que no tenga ya un espacio asignado en el JSON para este día
+    // ==========================================
+    // CASO 1: SE SELECCIONÓ "DESPERDICIO"
+    // ==========================================
+    if (espacio.trim().toLowerCase() === "desperdicio") {
+        const fechasCiclo = obtenerCicloJuevesViernesSabado(fechaSeleccionada);
+        const [fJueves, fViernes, fSabado] = fechasCiclo;
+
+        // A. Validar contra asignaciones guardadas en disco en cualquiera de los 3 días
+        for (const f of fechasCiclo) {
+            const yaOcupadoEnDisco = asignacionesExistentes.some(
+                a => a.fecha === f && a.nombre.trim().toLowerCase() === nombre.toLowerCase()
+            );
+            if (yaOcupadoEnDisco) {
+                alert(`[Conflicto] ${nombre} ya tiene una asignación el día ${f}. No puede cubrir el turno de Desperdicio (Jueves a Sábado).`);
+                return;
+            }
+        }
+
+        // B. Validar contra items temporales pendientes por guardar
+        for (const f of fechasCiclo) {
+            const yaEnTemporal = itemsTemporales.some(
+                it => (it.fecha || fechaSeleccionada) === f && it.nombre.trim().toLowerCase() === nombre.toLowerCase()
+            );
+            if (yaEnTemporal) {
+                alert(`[Conflicto] Ya agregaste a ${nombre} en la lista para el día ${f}.`);
+                return;
+            }
+        }
+
+        // Agregar las 3 asignaciones ligadas a sus fechas correspondientes
+        itemsTemporales.push(
+            { nombre, espacio: "Desperdicio", fecha: fJueves },
+            { nombre, espacio: "Desperdicio", fecha: fViernes },
+            { nombre, espacio: "Desperdicio", fecha: fSabado }
+        );
+
+        renderTablaItems();
+        inputCompanero.value = "";
+        inputCompanero.focus();
+        return;
+    }
+
+    // ==========================================
+    // CASO 2: CUALQUIER OTRO ESPACIO (1 DÍA)
+    // ==========================================
     const yaRegistradoEnDisco = asignacionesExistentes.some(
         a => a.fecha === fechaSeleccionada && a.nombre.trim().toLowerCase() === nombre.toLowerCase()
     );
@@ -228,9 +303,8 @@ function agregarItemALista() {
         return;
     }
 
-    // 2. Validar que no esté agregado ya en la tabla temporal
     const yaEnListaTemporal = itemsTemporales.some(
-        it => it.nombre.trim().toLowerCase() === nombre.toLowerCase()
+        it => (it.fecha || fechaSeleccionada) === fechaSeleccionada && it.nombre.trim().toLowerCase() === nombre.toLowerCase()
     );
 
     if (yaEnListaTemporal) {
@@ -238,31 +312,10 @@ function agregarItemALista() {
         return;
     }
 
-    itemsTemporales.push({ nombre, espacio });
+    itemsTemporales.push({ nombre, espacio, fecha: fechaSeleccionada });
     renderTablaItems();
     inputCompanero.value = "";
     inputCompanero.focus();
-}
-
-function quitarItem(indice) {
-    itemsTemporales.splice(indice, 1);
-    renderTablaItems();
-}
-
-function renderTablaItems() {
-    const tbody = document.getElementById("cuerpoTabla");
-    if (itemsTemporales.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#888;">No hay registros en la lista aún.</td></tr>`;
-        return;
-    }
-
-    tbody.innerHTML = itemsTemporales.map((it, idx) => `
-        <tr>
-            <td>${it.nombre}</td>
-            <td>${it.espacio}</td>
-            <td><button type="button" class="btn-quitar" onclick="quitarItem(${idx})">Eliminar</button></td>
-        </tr>
-    `).join("");
 }
 
 async function guardarListaDia() {
@@ -271,16 +324,21 @@ async function guardarListaDia() {
         return;
     }
 
-    const payload = {
-        fecha: fechaSeleccionada,
-        items: itemsTemporales
-    };
+    // Enviar cada asignación con su fecha asignada (soporta el día actual y los días del ciclo)
+    const itemsPorGuardar = itemsTemporales.map(it => ({
+        nombre: it.nombre,
+        espacio: it.espacio,
+        fecha: it.fecha || fechaSeleccionada
+    }));
 
     try {
         const res = await fetch(`${API_URL}/asignar-dia`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({
+                fecha: fechaSeleccionada,
+                items: itemsPorGuardar
+            })
         });
 
         const data = await res.json();
@@ -300,9 +358,33 @@ async function guardarListaDia() {
         await cargarAsignaciones();
         renderCalendario();
     } catch (err) {
-        console.error("Error al guardar la lista del día:", err);
+        console.error("Error al guardar la lista:", err);
         alert("Error de conexión al guardar.");
     }
+}
+
+function quitarItem(indice) {
+    itemsTemporales.splice(indice, 1);
+    renderTablaItems();
+}
+
+function renderTablaItems() {
+    const tbody = document.getElementById("cuerpoTabla");
+    if (itemsTemporales.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#888;">No hay registros en la lista aún.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = itemsTemporales.map((it, idx) => {
+        const detalleFecha = it.fecha !== fechaSeleccionada ? ` <small style="color:#007bff;">(${it.fecha})</small>` : "";
+        return `
+      <tr>
+        <td>${it.nombre}</td>
+        <td>${it.espacio}${detalleFecha}</td>
+        <td><button type="button" class="btn-quitar" onclick="quitarItem(${idx})">Eliminar</button></td>
+      </tr>
+    `;
+    }).join("");
 }
 
 // ==========================================
